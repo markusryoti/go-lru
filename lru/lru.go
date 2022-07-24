@@ -23,7 +23,6 @@ func NewLRU(capacity int) *LRU {
 		list:      &doublyLinkedList{},
 		searchMap: make(map[string]*node, capacity),
 		capacity:  capacity,
-		length:    0,
 	}
 }
 
@@ -33,17 +32,15 @@ func (l *LRU) Get(key string) int {
 		return -1
 	}
 
-	currentFirst := l.list.first
-	l.updateNode(n, currentFirst, n.value)
+	l.updateNode(n, n.value)
 	return n.value
 }
 
 func (l *LRU) Put(key string, value int) {
 	existingNode := l.searchMap[key]
-	currentFirst := l.list.first
 
 	if existingNode != nil {
-		l.updateNode(existingNode, currentFirst, value)
+		l.updateNode(existingNode, value)
 		return
 	}
 
@@ -51,10 +48,11 @@ func (l *LRU) Put(key string, value int) {
 		l.removeLast()
 	}
 
-	l.addNewNode(key, value, currentFirst)
+	l.addNewNode(key, value)
 }
 
-func (l *LRU) updateNode(existing, currentFirst *node, value int) {
+func (l *LRU) updateNode(existing *node, value int) {
+	currentFirst := l.list.first
 	existing.value = value
 	currentNext := existing.next
 
@@ -73,16 +71,19 @@ func (l *LRU) removeLast() {
 	if currentLast.previous != nil {
 		currentLast.previous.next = nil
 	}
+
 	l.list.last = currentLast.previous
 	l.length--
 }
 
-func (l *LRU) addNewNode(key string, value int, currentFirst *node) {
-	l.searchMap[key] = &node{
+func (l *LRU) addNewNode(key string, value int) {
+	n := &node{
 		value: value,
 	}
 
-	n := l.searchMap[key]
+	l.searchMap[key] = n
+
+	currentFirst := l.list.first
 
 	if currentFirst == nil {
 		l.list.first = n
